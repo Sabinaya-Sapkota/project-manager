@@ -11,7 +11,7 @@
 [![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
 [![Built with Tauri](https://img.shields.io/badge/built%20with-Tauri%202-24c8db)](https://tauri.app)
 
-[**Try the live demo**](https://sabinaya-sapkota.github.io/project-manager/) · [**Download for Windows**](https://github.com/Sabinaya-Sapkota/project-manager/releases/latest) · [Report a bug](https://github.com/Sabinaya-Sapkota/project-manager/issues/new/choose)
+[**Try the live demo**](https://project-manager.sabinayasapkota.info.np/) · [**Download for Windows**](https://github.com/Sabinaya-Sapkota/project-manager/releases/latest) · [Report a bug](https://github.com/Sabinaya-Sapkota/project-manager/issues/new/choose)
 
 </div>
 
@@ -28,7 +28,7 @@ Most boards apps want an account, a subscription and an internet connection. Pro
 
 ## Try it in your browser
 
-The [web demo](https://sabinaya-sapkota.github.io/project-manager/) runs the exact same interface entirely in your browser, with sample data. Nothing is uploaded, and your changes are kept in the browser's local storage. You can even install it from your browser's address bar as an app that works offline.
+The [web demo](https://project-manager.sabinayasapkota.info.np/) runs the exact same interface entirely in your browser, with sample data. Nothing is uploaded, and your changes are kept in the browser's local storage. You can even install it from your browser's address bar as an app that works offline.
 
 The demo leaves out the features that need the desktop: folder sync, native notifications, opening the data folder and large attachments (demo files are limited to 1 MB).
 
