@@ -151,6 +151,14 @@ project-manager/
 2. In **Settings, then Pages, then Build and deployment**, set the source to **GitHub Actions** (not "Deploy from a branch", which would show this README instead of the demo). The demo deploys on every push to `main`, or run **Deploy web demo** manually from the Actions tab.
 3. Tag a release, for example `git tag v0.1.0 && git push --tags`. The release workflow builds the Windows installer and attaches it to a new GitHub release.
 
+### No workflows? Use the pre-built copy
+
+The `docs/` folder contains the demo site already assembled. If you prefer not to use Actions, go to **Settings, then Pages**, choose **Deploy from a branch**, pick `main` and the **`/docs`** folder, and save. After changing `ui/` or `demo/`, rebuild it with:
+
+```bash
+rm -rf docs && mkdir docs && cp -r ui/* demo/* docs/ && cp src-tauri/src/schema.sql docs/ && touch docs/.nojekyll
+```
+
 ## Roadmap
 
 - Installers for macOS and Linux

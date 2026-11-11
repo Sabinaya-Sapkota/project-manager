@@ -1,0 +1,267 @@
+<!doctype html><html><head><meta charset="utf-8"><title>Project Manager</title>
+<script>if(!window.__TAURI__){document.write('<link rel="manifest" href="manifest.webmanifest"><meta name="theme-color" content="#0f1218"><script src="vendor/sql-wasm.js"><\/script><script src="web-shim.js"><\/script>')}</script>
+<style>
+:root{--bg:#0f1218;--panel:#171b24;--card:#212736;--tx:#e6e9f0;--mut:#8b93a7;--acc:#6c8cff;--bd:#2a3142}
+:root[data-t=light]{--bg:#f3f4f8;--panel:#fff;--card:#f1f3f9;--tx:#1b2030;--mut:#667;--bd:#dde1ec}
+*{box-sizing:border-box}body{margin:0;font:14px system-ui,sans-serif;background:var(--bg);color:var(--tx);display:flex;height:100vh}
+aside{width:240px;background:var(--panel);border-right:1px solid var(--bd);padding:12px;overflow:auto;flex:none}
+main{flex:1;display:flex;flex-direction:column;min-width:0}
+header{display:flex;gap:8px;padding:10px 16px;border-bottom:1px solid var(--bd);align-items:center}
+#view{flex:1;overflow:auto;padding:16px}
+input,textarea,select,button{font:inherit;color:var(--tx);background:var(--card);border:1px solid var(--bd);border-radius:6px;padding:6px 8px;min-width:0}
+textarea{width:100%;resize:vertical}button{cursor:pointer}button:hover{border-color:var(--acc)}button.p{background:var(--acc);color:#fff;border:0}
+button.s{padding:2px 6px;border:0;background:none;color:var(--mut)}
+.item{padding:6px 8px;border-radius:6px;cursor:pointer;display:flex;justify-content:space-between;gap:6px;align-items:center}.item:hover{background:var(--card)}
+h4{margin:14px 0 6px;color:var(--mut);font-size:11px;text-transform:uppercase}
+.tb{display:flex;gap:8px;align-items:center;margin-bottom:12px;flex-wrap:wrap}
+.board{display:flex;gap:12px;align-items:flex-start;height:calc(100% - 48px)}
+.list{width:280px;flex:none;background:var(--panel);border-radius:10px;padding:8px;max-height:100%;display:flex;flex-direction:column}
+.cards{overflow:auto;min-height:24px;display:flex;flex-direction:column;gap:6px;margin:6px 0}
+.card{background:var(--card);border-radius:8px;padding:8px;cursor:grab;border:1px solid var(--bd);word-break:break-word}
+.dn{opacity:.55;text-decoration:line-through}.due{font-size:11px;color:var(--mut)}.od{color:#ff6b6b}
+.pri1{border-left:3px solid #4ade80}.pri2{border-left:3px solid #fbbf24}.pri3{border-left:3px solid #f87171}
+.chips{display:flex;gap:4px;flex-wrap:wrap;margin-bottom:4px}.chip{font-size:10px;padding:1px 6px;border-radius:8px;color:#111;cursor:pointer}.chip.off{opacity:.3}
+dialog{background:var(--panel);color:var(--tx);border:1px solid var(--bd);border-radius:10px;width:560px;max-width:95vw;max-height:90vh}
+dialog::backdrop{background:#0008}.row{display:flex;gap:8px;margin:8px 0;align-items:center}.row>input,.row>select{flex:1}
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:12px}.box{background:var(--panel);border-radius:10px;padding:12px}
+.bar{height:4px;background:var(--card);border-radius:2px;margin:0 8px 4px}.bar i{display:block;height:100%;background:var(--acc);border-radius:2px}
+.cal{display:grid;grid-template-columns:repeat(7,1fr);gap:4px}.day{background:var(--panel);min-height:96px;border-radius:6px;padding:4px;overflow:hidden}.day.o{opacity:.4}.day.t{outline:1px solid var(--acc)}
+.ce{font-size:11px;background:var(--card);border-radius:4px;padding:2px 4px;margin-top:2px;cursor:pointer;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.ck{display:flex;gap:6px;align-items:center;padding:2px 0}.ck input{flex:none}.act{font-size:12px;color:var(--mut);padding:2px 0}
+.tr{display:flex;height:28px;align-items:center}.tl{width:190px;flex:none;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:12px;padding-right:8px}.tt{position:relative;height:100%;flex:none}.b2{position:absolute;top:5px;height:18px;border-radius:5px;background:var(--acc);color:#fff;font-size:11px;padding:0 6px;overflow:hidden;white-space:nowrap;cursor:pointer}.b2.dn2{opacity:.4}.b2.ov{background:#ef4444}
+.card{user-select:none}.lh{cursor:grab}.ph{border:2px dashed var(--acc);border-radius:8px;opacity:.6;flex:none;box-sizing:border-box}
+#ctx{position:fixed;display:none;z-index:10000;min-width:190px;background:var(--panel);border:1px solid var(--bd);border-radius:8px;padding:4px;box-shadow:0 10px 30px #0006}
+.cm-i{position:relative;padding:6px 10px;border-radius:5px;cursor:pointer;display:flex;justify-content:space-between;gap:16px;white-space:nowrap}.cm-i:hover{background:var(--card)}.cm-d{color:#ff6b6b}.cm-sep{height:1px;background:var(--bd);margin:4px 2px}
+.cm-sub{display:none;position:absolute;left:100%;top:-4px;min-width:170px;background:var(--panel);border:1px solid var(--bd);border-radius:8px;padding:4px;box-shadow:0 10px 30px #0006;max-height:60vh;overflow:auto}.cm-i:hover>.cm-sub{display:block}#ctx.flip .cm-sub{left:auto;right:100%}
+</style></head><body>
+<aside><b style="font-size:16px">⚡ Project Manager</b>
+<div class="item" onclick="home()" style="margin-top:10px">🏠 Home <span class="due">h</span></div>
+<div class="item" onclick="calendar()">📅 Calendar <span class="due">c</span></div>
+<div class="item" onclick="archived()">🗄 Archived cards</div>
+<h4>Workspaces</h4><div id="ws"></div><button onclick="newWs()" style="width:100%;margin-top:6px">+ Workspace</button>
+<h4>Boards</h4><div id="bd"></div><button onclick="newBoard()" style="width:100%;margin-top:6px">+ Board</button>
+<div class="item" onclick="settingsView()" style="margin-top:16px">⚙ Settings</div><div class=due style="margin-top:8px">Tip: right-click cards, lists, boards and workspaces for quick actions.</div><input type="file" id="imp" accept=".json" hidden onchange="doImport(this)"></aside>
+<main><header><input id="s" placeholder="Search cards ( / )" style="flex:1" oninput="doSearch(this.value)"><span id="rem" class="due"></span><span id="msg" class="due"></span></header>
+<div id="view"></div></main><dialog id="dlg"></dialog><div id="ctx"></div>
+<script>
+const inv=(c,a)=>window.__TAURI__.core.invoke(c,a);
+const $=id=>document.getElementById(id);
+const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const today=()=>new Date().toLocaleDateString('sv');
+let S={ws:null,board:null,view:'home',cal:new Date(),f:{q:'',label:'',pri:0},sort:'manual',set:{},card:null,skip:false};
+function toast(t){$('msg').textContent=t;clearTimeout(toast.t);toast.t=setTimeout(()=>$('msg').textContent='',6000)}
+async function run(p){try{return await p}catch(x){toast('⚠ '+x)}}
+function setView(v){S.view=v;$('view').style.background='';$('view').scrollTop=0}
+function refresh(){({home,board:()=>openBoard(S.board),cal:calendar,settings:settingsView,archived,timeline:()=>timeline(),search:()=>doSearch($('s').value)})[S.view]()}
+function openDlg(html,onclose){const d=$('dlg');d.innerHTML=html;d.returnValue='';d.onclose=()=>{if(d.open)return;(onclose||refresh)()};if(!d.open)d.showModal()}
+function ask(label,def=''){return new Promise(r=>{const d=$('dlg');d.innerHTML=`<form method="dialog"><b>${label}</b><div class=row><input id=askin value="${esc(def)}"></div><div class=row><button type=button onclick="$('dlg').close('x')">Cancel</button><button class=p value=ok>OK</button></div></form>`;d.returnValue='';d.onclose=()=>{if(d.open)return;r(d.returnValue==='ok'?$('askin').value:null)};d.showModal();$('askin').focus()})}
+function formDlg(title,fields,del){return new Promise(r=>{const d=$('dlg');
+d.innerHTML=`<form method="dialog"><b>${title}</b>${fields.map(f=>`<div class=row><label style="flex:0 0 80px">${f[1]}</label><input name="${f[0]}" type="${f[2]||'text'}" value="${esc(f[3]??'')}"></div>`).join('')}<div class=row>${del?`<button type=button onclick="$('dlg').close('del')">${del}</button>`:''}<button type=button onclick="$('dlg').close('x')">Cancel</button><button class=p value=ok>Save</button></div></form>`;
+d.returnValue='';d.onclose=()=>{if(d.open)return;const v=d.returnValue;if(v==='ok'){const o={};d.querySelectorAll('input').forEach(i=>o[i.name]=i.value);r(o)}else r(v==='del'?'del':null)};d.showModal()})}
+// ---------- sidebar / boot
+async function boot(){const st=await run(inv('settings'))||[];S.set={};st.forEach(r=>S.set[r.key]=r.value);
+document.documentElement.dataset.t=S.set.theme||'dark';if(S.set.accent){document.documentElement.style.setProperty('--acc',S.set.accent)}
+await side();home();remind()}
+const setSet=(k,v)=>{S.set[k]=v;return run(inv('set_setting',{key:k,value:v}))};
+function toggleTheme(){const t=document.documentElement.dataset.t==='light'?'dark':'light';document.documentElement.dataset.t=t;setSet('theme',t)}
+function setAccent(v){document.documentElement.style.setProperty('--acc',v);clearTimeout(setAccent.t);setAccent.t=setTimeout(()=>setSet('accent',v),300)}
+async function side(){const w=await run(inv('workspaces'))||[];S.wss=w;if(!w.find(x=>x.id==S.ws))S.ws=w.length?w[0].id:null;
+$('ws').innerHTML=w.map(x=>`<div class="item" data-ws=${x.id} onclick="S.ws=${x.id};side().then(home)" style="${x.id==S.ws?'background:var(--card)':''}"><span><span style="color:${esc(x.color)}">●</span> ${esc(x.icon)} ${esc(x.name)}</span><button class=s onclick="event.stopPropagation();editWs(${x.id},'${esc(x.name).replace(/'/g,'')}','${esc(x.color)}','${esc(x.icon)}')">✎</button></div>`).join('')||'<div class=due>None yet</div>';
+S.boards=S.ws?await run(inv('boards',{ws:S.ws}))||[]:[];
+$('bd').innerHTML=S.boards.map(x=>`<div class="item" data-bd=${x.id} onclick="openBoard(${x.id})"><span>${x.fav?'⭐ ':''}${esc(x.name)}</span><span><button class=s title="Duplicate structure" onclick="event.stopPropagation();dupBoard(${x.id})">⧉</button><button class=s onclick="event.stopPropagation();editBoard(${x.id})">✎</button></span></div>`).join('')||'<div class=due>No boards</div>'}
+async function newWs(){const o=await formDlg('New workspace',[['name','Name'],['icon','Icon','text','📁'],['color','Colour','color','#6c8cff']]);if(o&&o!=='del'){await run(inv('add_workspace',o));await side();home()}}
+async function editWs(id,name,color,icon){const o=await formDlg('Edit workspace',[['name','Name','text',name],['icon','Icon','text',icon],['color','Colour','color',color]],'Delete');
+if(o==='del'){if(confirm('Delete workspace with all boards and cards?')){await run(inv('del_workspace',{id}));S.ws=null}}else if(o)await run(inv('edit_workspace',{id,...o}));await side();home()}
+async function newBoard(){if(!S.ws)return toast('Create a workspace first');const o=await formDlg('New board',[['name','Name'],['bg','Background','color','#1f2937']]);if(o&&o!=='del'){const id=await run(inv('add_board',{ws:S.ws,...o}));await side();if(id)openBoard(id)}}
+async function editBoard(id){const b=S.boards.find(x=>x.id==id);const o=await formDlg('Edit board',[['name','Name','text',b.name],['bg','Background','color',b.bg]],'Delete');
+if(o==='del'){if(confirm('Delete board and all its cards?'))await run(inv('del_board',{id}));await side();return home()}if(o)await run(inv('edit_board',{id,...o}));await side();S.board==id?openBoard(id):home()}
+async function dupBoard(id){const n=await run(inv('dup_board',{id}));await side();if(n)openBoard(n)}
+// ---------- home
+const DEF=['overdue','today','upcoming','focus','favs','recentb','milestones','progress','recent','inbox','notes'];
+const dash=()=>{let a=[];try{a=JSON.parse(S.set.dash||'[]')}catch{}DEF.forEach(id=>{if(!a.find(x=>x.id==id))a.push({id,on:true})});return a.filter(x=>DEF.includes(x.id))};
+const li=a=>a.map(c=>`<div class="item" data-c=${c.id} onclick="editCard(${c.id})"><span>${esc(c.title)}</span><span class="due ${c.due&&c.due<today()?'od':''}">${esc(c.due||c.board)}</span></div>`).join('')||'<div class=due>Nothing here</div>';
+const WT={favs:['⭐ Favourite boards',d=>d.favs.map(b=>`<div class="item" onclick="openBoard(${b.board_id})">${esc(b.board)}</div>`).join('')||'<div class=due>Star a board with ☆</div>'],
+recentb:['🕘 Recent boards',d=>d.recent_boards.map(b=>`<div class="item" onclick="openBoard(${b.board_id})">${esc(b.board)}</div>`).join('')||'<div class=due>Nothing yet</div>'],
+focus:['🍅 Focus timer',()=>`<div id=pm style="font-size:34px;font-weight:600">25:00</div><div class=row><button onclick="pomo(25)">Focus 25</button><button onclick="pomo(5)">Break 5</button><button onclick="pomo(0)">Stop</button></div>`],milestones:['🏁 Milestones',d=>d.milestones.map(m=>`<div class="item" onclick="openBoard(${m.board_id})"><span>${esc(m.name)}</span><span class="due ${m.due<today()?'od':''}">${esc(m.due)} · ${esc(m.board)}</span></div>`).join('')||'<div class=due>No milestones</div>'],overdue:['⚠ Overdue',d=>li(d.overdue)],today:['📌 Due today',d=>li(d.today)],upcoming:['⏳ Upcoming',d=>li(d.upcoming)],recent:['🕑 Recently updated',d=>li(d.recent)],
+progress:['📈 Project progress',d=>d.progress.map(p=>`<div class="item" onclick="openBoard(${p.board_id})"><span>${esc(p.board)}</span><span class=due>${p.done}/${p.total}</span></div><div class=bar><i style="width:${p.total?100*p.done/p.total:0}%"></i></div>`).join('')||'<div class=due>No boards</div>'],
+inbox:['📥 Quick capture',d=>`<div class=row><input placeholder="Idea or task, Enter to save" onkeydown="if(event.key==='Enter')cap(this)"></div>`+d.inbox.map(i=>`<div class="item" data-inbox=${i.id} data-t="${esc(i.text)}"><span>${esc(i.text)}</span><button class=s onclick="delInbox(${i.id})">✕</button></div>`).join('')],
+notes:['📝 Notes & ideas',()=>`<textarea rows=6 onblur="setSet('notes',this.value)">${esc(S.set.notes||'')}</textarea>`]};
+async function home(){setView('home');const d=await run(inv('dashboard',{today:today()}));if(!d)return;
+const empty=!S.ws?`<div class=box style="margin-bottom:12px"><b>Welcome!</b> Create a workspace, or <button class=p onclick="run(inv('seed')).then(()=>{S.ws=null;boot()})">add my starter workspaces</button></div>`:'';
+$('view').innerHTML=`<div class=tb><b style="font-size:18px">Home</b><button onclick="custDash()">⚙ Customise</button></div>${empty}<div class=grid>${dash().filter(w=>w.on).map(w=>`<div class=box><h4 style="margin-top:0">${WT[w.id][0]}</h4>${WT[w.id][1](d)}</div>`).join('')}</div>`}
+function custDash(){const a=dash();openDlg(`<b>Dashboard widgets</b>${a.map((w,i)=>`<div class=row><input type=checkbox style="flex:none" ${w.on?'checked':''} onchange="dashSet(${i},'on',this.checked)"><span style="flex:1">${WT[w.id][0]}</span><button onclick="dashSet(${i},'up')">↑</button><button onclick="dashSet(${i},'down')">↓</button></div>`).join('')}<div class=row><button class=p onclick="$('dlg').close()">Done</button></div>`)}
+async function dashSet(i,k,v){const a=dash();if(k==='on')a[i].on=v;else{const j=k==='up'?i-1:i+1;if(j<0||j>=a.length)return;[a[i],a[j]]=[a[j],a[i]]}await setSet('dash',JSON.stringify(a));custDash()}
+async function cap(el){await run(inv('add_inbox',{text:el.value}));home()}
+async function delInbox(id){await run(inv('del_inbox',{id}));home()}
+async function remind(){const d=await run(inv('dashboard',{today:today()}));if(d)$('rem').textContent=(d.overdue.length||d.today.length)?`⏰ ${d.overdue.length} overdue · ${d.today.length} due today`:'';setTimeout(remind,600000)}
+// ---------- board
+async function openBoard(id){const d=await run(inv('board',{id}));if(!d)return;setView('board');run(inv('touch_board',{id}));S.board=id;S.data=d;paint()}
+function vis(c){const f=S.f;if(f.q&&!(c.title+' '+c.description).toLowerCase().includes(f.q.toLowerCase()))return false;if(f.label&&!(c.labels||'').split(';').some(x=>x.split('|')[2]==f.label))return false;return !f.pri||c.priority>=f.pri}
+const srt=a=>S.sort==='due'?[...a].sort((x,y)=>(x.due||'9')>(y.due||'9')?1:-1):S.sort==='pri'?[...a].sort((x,y)=>y.priority-x.priority):a;
+const cardH=c=>{const L=(c.labels||'').split(';').filter(Boolean).map(x=>x.split('|'));return `<div class="card pri${c.priority} ${c.done?'dn':''}" data-c=${c.id} data-p=${c.pos} onclick="editCard(${c.id})">${L.length?`<div class=chips>${L.map(l=>`<span class=chip style="background:${esc(l[0])}">${esc(l[1])}</span>`).join('')}</div>`:''}${c.blocked?'🔒 ':''}${esc(c.title)}<div class=due>${c.due?`<span class="${!c.done&&c.due<today()?'od':''}">📅 ${esc(c.due)}</span> `:''}${c.recur?'🔁 ':''}${c.ck_total?`☑ ${c.ck_done}/${c.ck_total} `:''}${c.att?'📎'+c.att:''} ${c.timer?'⏱ running':c.spent?'⏱ '+fmtD(c.spent):''}</div></div>`};
+function paint(){const d=S.data;$('view').style.background=d.board.bg;
+$('view').innerHTML=`<div class=tb><b style="font-size:18px">${esc(d.board.name)}</b><input placeholder="Filter" value="${esc(S.f.q)}" oninput="S.f.q=this.value;paint2()" style="width:120px"><select onchange="S.f.label=this.value;paint()"><option value="">All labels</option>${d.labels.map(l=>`<option value=${l.id} ${S.f.label==l.id?'selected':''}>${esc(l.name)}</option>`).join('')}</select>
+<select onchange="S.f.pri=+this.value;paint()">${['Any priority','Low+','Medium+','High'].map((n,i)=>`<option value=${i} ${S.f.pri==i?'selected':''}>${n}</option>`).join('')}</select>
+<select onchange="S.sort=this.value;paint()">${[['manual','Manual order'],['due','Sort: due date'],['pri','Sort: priority']].map(o=>`<option value=${o[0]} ${S.sort==o[0]?'selected':''}>${o[1]}</option>`).join('')}</select><button onclick="labelsDlg()">🏷 Labels</button><button onclick="timeline()">🗓 Timeline</button><button onclick="msDlg()">🏁 Milestones</button><button onclick="filtersDlg()">🔖 Filters</button><button onclick="favBoard()">${d.board.fav?'⭐':'☆'}</button><button onclick="exportMd()">⬇ Markdown</button></div><div class=board id=bd2></div>`;paint2()}
+function paint2(){const d=S.data;$('bd2').innerHTML=d.lists.map(l=>`<div class=list data-l=${l.id} data-p=${l.pos} style="${l.color?'border-top:3px solid '+esc(l.color):''}"><div class="item lh"><b ondblclick="renList(${l.id},'${esc(l.name).replace(/'/g,'')}')" title="Drag to reorder · double-click to rename">${esc(l.name)} <span class=due>${d.cards.filter(c=>c.list_id==l.id).length}</span></b><button class=s onclick="listMenu(${l.id})">⋯</button></div>
+<div class=cards>${srt(d.cards.filter(c=>c.list_id==l.id&&vis(c))).map(cardH).join('')}</div><input class=addc placeholder="+ Add card" onkeydown="if(event.key==='Enter'&&this.value.trim())addCard(${l.id},this.value)"></div>`).join('')+`<div class=list><button onclick="addList()">+ Add list</button></div>`}
+const re=()=>openBoard(S.board);
+async function addCard(l,t){await run(inv('add_card',{list:l,title:t}));re()}
+async function addList(){const n=await ask('List name');if(n){await run(inv('add_list',{board:S.board,name:n}));re()}}
+async function renList(id,old){const n=await ask('Rename list',old);if(n){await run(inv('rename_list',{id,name:n}));re()}}
+async function mvList(id,dir){await run(inv('move_list',{id,dir}));re()}
+async function delList(id){if(confirm('Delete list and its cards?')){await run(inv('del_list',{id}));re()}}
+async function labelsDlg(){const d=await run(inv('board',{id:S.board}));S.data=d;
+openDlg(`<b>Labels</b>${d.labels.map(l=>`<div class=row><span class=chip style="background:${esc(l.color)}">${esc(l.name)}</span><span style="flex:1"></span><button onclick="run(inv('del_label',{id:${l.id}})).then(labelsDlg)">✕</button></div>`).join('')}<div class=row><input id=ln placeholder="New label"><input type=color id=lc value="#6c8cff" style="flex:none;padding:0;height:30px"><button class=p onclick="run(inv('add_label',{board:S.board,name:$('ln').value,color:$('lc').value})).then(labelsDlg)">Add</button></div><div class=row><button onclick="$('dlg').close()">Close</button></div>`,()=>re())}
+async function tplDlg(list){const t=await run(inv('templates'))||[];
+openDlg(`<b>Card templates</b>${t.map(x=>`<div class=row><span style="flex:1">${esc(x.name)}</span><button class=p onclick="run(inv('use_template',{id:${x.id},list:${list}})).then(()=>$('dlg').close())">Use</button><button onclick="run(inv('del_template',{id:${x.id}})).then(()=>tplDlg(${list}))">✕</button></div>`).join('')||'<div class=due>No templates yet. Open a card and choose "Save as template".</div>'}<div class=row><button onclick="$('dlg').close()">Close</button></div>`,()=>re())}
+// ---------- card editor
+async function saveCard(){if(S.skip||!$('et'))return;await run(inv('update_card',{id:S.card,title:$('et').value,description:$('ed').value,due:$('edu').value||null,start:$('est').value||null,priority:+$('ep').value,recur:$('er').value,fields:$('ef').value,est:+$('eest').value||0}))}
+async function act(cmd,args){await saveCard();await run(inv(cmd,args));editCard(S.card)}
+async function editCard(id){S.card=id;S.skip=false;const d=await run(inv('card_detail',{id}));if(!d)return;const c=d.card,on=new Set(d.labels.map(x=>x.label_id));
+const o=(v,n)=>`<option value="${v}" ${c.recur===v||c.priority===v?'selected':''}>${n}</option>`;
+openDlg(`<input id=et value="${esc(c.title)}" style="width:100%;font-size:16px"><div class=row><textarea id=ed rows=4 placeholder="Description">${esc(c.description)}</textarea></div>
+<div class=row><input id=est type=date title="Start date" value="${esc(c.start||'')}"><input id=edu type=date title="Due date" value="${esc(c.due||'')}"><select id=ep>${['No priority','Low','Medium','High'].map((n,i)=>`<option value=${i} ${c.priority===i?'selected':''}>${n}</option>`).join('')}</select><select id=er>${[['','No repeat'],['daily','Daily'],['weekly','Weekly'],['monthly','Monthly']].map(r=>`<option value="${r[0]}" ${c.recur===r[0]?'selected':''}>${r[1]}</option>`).join('')}</select></div>
+<textarea id=ef rows=2 placeholder="Custom fields, one per line:  Key: value">${esc(c.fields)}</textarea>
+<div class=row><label style="flex:0 0 120px">Estimate (min)</label><input id=eest type=number min=0 value="${c.est||0}" style="max-width:90px"><span class=due style="flex:1">⏱ spent ${fmtD(c.spent+(c.timer?Math.round(Date.now()/1000)-c.timer:0))}</span><button onclick="act('timer_toggle',{id:${id}})">${c.timer?'⏹ Stop timer':'▶ Start timer'}</button></div>
+<h4>Labels</h4><div class=chips>${d.boardLabels.map(l=>`<span class="chip ${on.has(l.id)?'':'off'}" style="background:${esc(l.color)}" onclick="act('toggle_label',{card:${id},label:${l.id}})">${esc(l.name)}</span>`).join('')}</div>
+<h4>Checklist</h4>${d.checklist.map(k=>`<div class=ck><input type=checkbox ${k.done?'checked':''} onchange="act('toggle_check',{id:${k.id}})"><span style="flex:1">${esc(k.text)}</span><button class=s onclick="act('del_check',{id:${k.id}})">✕</button></div>`).join('')}<input placeholder="+ Add item" style="width:100%" onkeydown="if(event.key==='Enter'&&this.value.trim())act('add_check',{card:${id},text:this.value})">
+<h4>Depends on</h4>${d.deps.map(x=>`<div class=ck><span style="flex:1">${x.done?'✓':'⏳'} ${esc(x.title)}</span><button class=s onclick="act('del_dep',{card:${id},dep:${x.id}})">✕</button></div>`).join('')}<div class=row><select id=dp>${d.others.map(x=>`<option value=${x.id}>${esc(x.title)}</option>`).join('')}</select><button onclick="$('dp').value&&act('add_dep',{card:${id},dep:+$('dp').value})">Add</button></div>
+<h4>Attachments</h4>${d.attachments.map(a=>`<div class=ck><a href="#" style="flex:1;color:var(--acc)" onclick="run(inv('open_attachment',{id:${a.id}}));return false">📎 ${esc(a.name)}</a><button class=s onclick="act('del_attachment',{id:${a.id}})">✕</button></div>`).join('')}<input type=file onchange="attach(this)">
+<h4>Comments & activity</h4><input placeholder="Write a comment, Enter to post" style="width:100%" onkeydown="if(event.key==='Enter'&&this.value.trim())act('add_comment',{card:${id},text:this.value})">${d.activity.map(a=>`<div class=act>${esc(a.at)} · ${esc(a.text)}</div>`).join('')}
+<div class=row style="flex-wrap:wrap"><button onclick="act('toggle_done',{id:${id}})">${c.done?'↩ Reopen':'✓ Mark done'}</button><button onclick="saveCard().then(()=>run(inv('dup_card',{id:${id}}))).then(()=>$('dlg').close())">Duplicate</button><button onclick="tplSave()">Save as template</button><button onclick="S.skip=true;run(inv('archive_card',{id:${id}})).then(()=>$('dlg').close())">Archive</button><button onclick="if(confirm('Delete card?')){S.skip=true;run(inv('del_card',{id:${id}})).then(()=>$('dlg').close())}">Delete</button><button class=p onclick="$('dlg').close()">Save & close</button></div>`,async()=>{await saveCard();refresh()})}
+async function attach(el){const f=el.files[0];if(!f)return;if(f.size>25e6)return toast('Max 25 MB');const b=await new Promise(r=>{const fr=new FileReader();fr.onload=()=>r(fr.result.split(',')[1]);fr.readAsDataURL(f)});act('add_attachment',{card:S.card,name:f.name,data:b})}
+async function tplSave(){await saveCard();const id=S.card;S.skip=true;$('dlg').close();const n=await ask('Template name');if(n){await run(inv('save_template',{card:id,name:n}));toast('Template saved')}editCard(id)}
+// ---------- calendar / search
+async function calendar(){setView('cal');const y=S.cal.getFullYear(),m=S.cal.getMonth(),f=d=>d.toLocaleDateString('sv');const st=new Date(y,m,1-((new Date(y,m,1).getDay()+6)%7)),en=new Date(st);en.setDate(en.getDate()+41);
+const cs=await run(inv('calendar',{from:f(st),to:f(en)}))||[];const ms=await run(inv('calendar_ms',{from:f(st),to:f(en)}))||[];let h='';
+for(let i=0;i<42;i++){const d=new Date(st);d.setDate(st.getDate()+i);const k=f(d);h+=`<div class="day ${d.getMonth()!=m?'o':''} ${k==today()?'t':''}"><b class=due>${d.getDate()}</b>${ms.filter(m=>m.due==k).map(m=>`<div class=ce style="color:#fbbf24" title="${esc(m.board)}">🏁 ${esc(m.name)}</div>`).join('')}${cs.filter(c=>c.due==k).map(c=>`<div class=ce style="${c.done?'text-decoration:line-through;opacity:.6':''}" title="${esc(c.board)}" data-c=${c.id} onclick="editCard(${c.id})">${esc(c.title)}</div>`).join('')}</div>`}
+$('view').innerHTML=`<div class=tb><button onclick="S.cal.setMonth(S.cal.getMonth()-1);calendar()">◀</button><b style="font-size:18px">${S.cal.toLocaleString('default',{month:'long',year:'numeric'})}</b><button onclick="S.cal.setMonth(S.cal.getMonth()+1);calendar()">▶</button><button onclick="S.cal=new Date();calendar()">Today</button></div><div class=cal>${['Mon','Tue','Wed','Thu','Fri','Sat','Sun'].map(x=>`<div class=due>${x}</div>`).join('')}${h}</div>`}
+let st;function doSearch(t){clearTimeout(st);st=setTimeout(async()=>{if(!t.trim())return S.view==='search'?home():null;const r=await run(inv('search',{text:t}))||[];setView('search');
+$('view').innerHTML=`<div class=box>${r.map(c=>`<div class="item" data-c=${c.id} onclick="editCard(${c.id})"><span>${esc(c.title)}</span><span class=due>${esc(c.board)}</span></div>`).join('')||'No results'}</div>`},200)}
+// ---------- data
+async function doExport(){const p=await run(inv('export_file'));if(p)toast('Exported: '+p)}
+async function doImport(el){const f=el.files[0];el.value='';if(!f||!confirm('Import REPLACES all current data (an automatic backup is made first). Continue?'))return;
+const t=await f.text();if(await run(inv('import_json',{text:t})).then(()=>true,()=>false)){S.ws=null;boot();toast('Imported')}}
+async function backupsDlg(){const b=await run(inv('backups'))||[];
+openDlg(`<b>Backups</b> <span class=due>(an automatic one is made at every launch)</span><div class=row><button class=p onclick="run(inv('backup')).then(backupsDlg)">Backup now</button></div>${b.map(n=>`<div class=row><span style="flex:1">${esc(n)}</span><button onclick="restore('${esc(n)}')">Restore</button></div>`).join('')||'<div class=due>No backups</div>'}<div class=row><button onclick="$('dlg').close()">Close</button></div>`,()=>{})}
+async function restore(n){if(!confirm('Replace ALL current data with '+n+'? (current data is backed up first)'))return;if(await run(inv('restore',{name:n})).then(()=>true,()=>false)){$('dlg').close();S.ws=null;boot();toast('Restored')}}
+addEventListener('keydown',e=>{if(/INPUT|TEXTAREA|SELECT/.test(document.activeElement.tagName)||$('dlg').open)return;
+if(e.key==='/'){e.preventDefault();$('s').focus()}else if(e.key==='h')home();else if(e.key==='c')calendar();else if(e.key==='n'){const i=document.querySelector('.addc');if(i){e.preventDefault();i.focus()}}});
+
+async function archived(){setView('archived');const r=await run(inv('archived'))||[];
+$('view').innerHTML=`<div class=tb><b style="font-size:18px">🗄 Archived cards</b></div><div class=box>${r.map(c=>`<div class=item><span>${esc(c.title)} <span class=due>${esc(c.board)} › ${esc(c.list)}</span></span><span><button onclick="run(inv('unarchive',{id:${c.id}})).then(archived)">Restore</button> <button onclick="if(confirm('Delete permanently?'))run(inv('del_card',{id:${c.id}})).then(archived)">Delete</button></span></div>`).join('')||'<div class=due>No archived cards</div>'}</div>`}
+const D=s=>Date.UTC(+s.slice(0,4),+s.slice(5,7)-1,+s.slice(8,10))/864e5,DS=n=>new Date(n*864e5).toISOString().slice(0,10);
+async function timeline(){const d=await run(inv('timeline',{board:S.board}));if(!d)return;setView('timeline');S.tl=d;paintTl()}
+function paintTl(){const d=S.tl,px=S.zoom||24,t=D(today()),rows=d.cards,ms=d.milestones;
+const lo=Math.min(t-3,...rows.map(c=>Math.min(D(c.start),D(c.due))),...ms.map(m=>D(m.due))),hi=Math.max(t+14,...rows.map(c=>Math.max(D(c.start),D(c.due))),...ms.map(m=>D(m.due))),W=(hi-lo+1)*px;
+let tk='';for(let i=lo;i<=hi;i+=7)tk+=`<div class=due style="position:absolute;left:${(i-lo)*px}px">${DS(i).slice(5)}</div>`;
+$('view').innerHTML=`<div class=tb><button onclick="openBoard(S.board)">← Board</button><b style="font-size:18px">Timeline · ${esc(S.data.board.name)}</b><button onclick="S.zoom=Math.max(6,(S.zoom||24)-6);paintTl()">−</button><button onclick="S.zoom=(S.zoom||24)+6;paintTl()">+</button><span class=due>Cards with a due date; start = start date or creation date</span></div>
+<div style="overflow:auto"><div style="position:relative;width:${W+190}px"><div style="position:relative;height:20px;margin-left:190px">${tk}</div>
+<div style="position:relative;height:22px;margin-left:190px">${ms.map(m=>`<div class=due style="position:absolute;left:${(D(m.due)-lo)*px}px;white-space:nowrap;color:#fbbf24;${m.done?'opacity:.5':''}">🏁 ${esc(m.name)}</div>`).join('')}</div>
+${rows.map(c=>{const a=Math.min(D(c.start),D(c.due)),b=Math.max(D(c.start),D(c.due));return `<div class=tr><div class=tl title="${esc(c.title)}">${esc(c.title)}</div><div class=tt style="width:${W}px"><div class="b2 ${c.done?'dn2':''} ${!c.done&&D(c.due)<t?'ov':''}" style="left:${(a-lo)*px}px;width:${Math.max(px,(b-a+1)*px)}px" data-c=${c.id} onclick="editCard(${c.id})" title="${esc(c.start)} → ${esc(c.due)}">${esc(c.due)}</div></div></div>`}).join('')||'<div class=due style="margin:12px 190px">No cards with due dates on this board yet.</div>'}
+<div style="position:absolute;top:0;bottom:0;left:${190+(t-lo+.5)*px}px;width:2px;background:var(--acc);opacity:.6;pointer-events:none"></div></div></div>`}
+async function msDlg(){const m=await run(inv('milestones',{board:S.board}))||[];
+openDlg(`<b>🏁 Milestones</b>${m.map(x=>`<div class=row><input type=checkbox style="flex:none" ${x.done?'checked':''} onchange="run(inv('toggle_milestone',{id:${x.id}})).then(msDlg)"><span style="flex:1">${esc(x.name)}</span><span class=due>${esc(x.due)}</span><button onclick="run(inv('del_milestone',{id:${x.id}})).then(msDlg)">✕</button></div>`).join('')||'<div class=due>None yet</div>'}<div class=row><input id=mn placeholder="Milestone name"><input id=md type=date style="flex:none"><button class=p onclick="run(inv('add_milestone',{board:S.board,name:$('mn').value,due:$('md').value})).then(msDlg)">Add</button></div><div class=row><button onclick="$('dlg').close()">Close</button></div>`)}
+async function filtersDlg(){S.fl=await run(inv('filters'))||[];
+openDlg(`<b>🔖 Saved filters</b>${S.fl.map(x=>`<div class=row><span style="flex:1">${esc(x.name)}</span><button class=p onclick="applyF(${x.id})">Apply</button><button onclick="run(inv('del_filter',{id:${x.id}})).then(filtersDlg)">✕</button></div>`).join('')||'<div class=due>None yet</div>'}<h4>Save current filter &amp; sort</h4><div class=row><input id=fn placeholder="Name"><button class=p onclick="saveF()">Save</button></div><div class=row><button onclick="clearF()">Clear filters</button><button onclick="$('dlg').close()">Close</button></div>`)}
+async function saveF(){const l=S.data.labels.find(x=>x.id==S.f.label);await run(inv('save_filter',{name:$('fn').value,data:JSON.stringify({q:S.f.q,label:l?l.name:'',pri:S.f.pri,sort:S.sort})}));filtersDlg()}
+function applyF(id){const d=JSON.parse(S.fl.find(x=>x.id==id).data);const l=S.data.labels.find(x=>x.name==d.label);S.f={q:d.q||'',label:l?l.id:'',pri:d.pri||0};S.sort=d.sort||'manual';$('dlg').close()}
+function clearF(){S.f={q:'',label:'',pri:0};S.sort='manual';$('dlg').close()}
+function syncDlg(){openDlg(`<b>☁ Folder sync</b><div class=due style="margin:6px 0">Choose a folder that your cloud app (OneDrive, Dropbox, Google Drive, Syncthing…) already syncs between your devices. The whole database and attachments are synced. If both devices changed, you pick which side wins.</div><div class=row><input id=sd placeholder="Full path of the sync folder" value="${esc(S.set.sync_dir||'')}"><button onclick="syncSet()">Save</button></div><div class=row><button class=p onclick="syncGo('auto')">Sync now</button><button onclick="syncGo('push')">Mine wins</button><button onclick="syncGo('pull')">Remote wins</button></div><div id=sr class=due></div><div class=row><button onclick="$('dlg').close()">Close</button></div>`,()=>{})}
+async function syncSet(){const v=$('sd').value.trim();await run(inv('sync_set',{dir:v}));if(v)S.set.sync_dir=v;else delete S.set.sync_dir;$('sr').textContent=v?'Folder saved':'Sync turned off'}
+async function syncGo(mode){if(mode!=='auto'&&!confirm(mode==='push'?'Overwrite the synced copy with THIS device?':'Replace THIS device with the synced copy? (a backup is made first)'))return;
+const r=await run(inv('sync_now',{mode}));if(!r)return;$('sr').textContent={same:'Already in sync',pushed:'Pushed to sync folder',pulled:'Pulled newer data',conflict:'Both sides changed. Choose "Mine wins" or "Remote wins".'}[r]||r;if(r==='pulled'){$('dlg').close();boot()}}
+async function autoSync(){if(!S.set.sync_dir)return;const r=await run(inv('sync_now',{mode:'auto'}));if(r==='pulled'){boot();toast('☁ Pulled changes')}else if(r==='conflict')toast('☁ Sync conflict: open Sync to resolve')}
+setInterval(autoSync,300000);
+function notifDlg(){openDlg(`<b>🔔 Windows notifications</b><div class=row><label><input type=checkbox ${S.set.notify!=='0'?'checked':''} onchange="setSet('notify',this.checked?'1':'0')"> Daily reminder: overdue / due-today cards and milestones</label></div><div class=row><label style="flex:0 0 140px">Notify after hour (0-23)</label><input type=number min=0 max=23 value="${S.set.notify_hour||9}" onchange="setSet('notify_hour',this.value)"></div><div class=row><button onclick="run(inv('test_notify'))">Send test</button><button class=p onclick="$('dlg').close()">Done</button></div>`,()=>{})}
+const fmtD=s=>{s=Math.max(0,Math.round(s||0));const h=Math.floor(s/3600),m=Math.floor(s%3600/60);return h?`${h}h ${m}m`:`${m}m`};
+function pomo(m){S.pomo=m?{end:Date.now()+m*60000,m}:null;tickP()}
+function tickP(){const el=$('pm');if(S.pomo){const r=Math.round((S.pomo.end-Date.now())/1000);if(r<=0){run(inv('notify_text',{title:'Project Manager',body:S.pomo.m>=20?'Focus session done. Take a break!':'Break over. Back to work!'}));toast('⏰ Timer finished');S.pomo=null}else if(el)el.textContent=String(Math.floor(r/60)).padStart(2,'0')+':'+String(r%60).padStart(2,'0')}if(!S.pomo&&el)el.textContent='25:00'}
+setInterval(tickP,1000);
+async function favBoard(){await run(inv('toggle_fav',{id:S.board}));await side();re()}
+async function exportMd(){const d=S.data;let t=`# ${d.board.name}\n\n`;d.lists.forEach(l=>{t+=`## ${l.name}\n\n`;d.cards.filter(c=>c.list_id==l.id).forEach(c=>{t+=`- [${c.done?'x':' '}] ${c.title}${c.due?' (due '+c.due+')':''}\n`});t+='\n'});
+const p=await run(inv('export_text',{name:d.board.name+'.md',text:t}));if(p)toast('Saved: '+p)}
+function listMenu(id){const l=S.data.lists.find(x=>x.id==id),n=esc(l.name).replace(/'/g,'');
+openDlg(`<b>${esc(l.name)}</b><div style="display:flex;flex-direction:column;gap:6px;margin-top:8px"><button onclick="renList(${id},'${n}')">Rename</button><button onclick="listColor(${id},'${esc(l.color||'#6c8cff')}')">Colour</button><button onclick="tplDlg(${id})">Add card from template</button><button onclick="archList(${id},true)">Archive done cards</button><button onclick="archList(${id},false)">Archive all cards</button><button onclick="delList(${id});$('dlg').close()">Delete list</button><button class=p onclick="$('dlg').close()">Close</button></div>`,()=>re())}
+async function listColor(id,cur){const o=await formDlg('List colour',[['color','Colour','color',cur]],'Remove colour');if(o==='del')await run(inv('set_list_color',{id,color:''}));else if(o)await run(inv('set_list_color',{id,color:o.color}));re()}
+async function archList(id,doneOnly){await run(inv('archive_cards',{list:id,doneOnly}));$('dlg').close()}
+// ---- pointer-based drag & drop (cards between lists, lists along the board)
+let DR=null;
+addEventListener('click',e=>{if(S.noclick){e.stopPropagation();e.preventDefault()}},true);
+addEventListener('pointerdown',e=>{if(e.button!==0||S.view!=='board'||$('dlg').open)return;
+ const card=e.target.closest('.card'),head=e.target.closest('.lh');if((!card&&!head)||e.target.closest('button,input,select,a'))return;
+ DR={kind:card?'card':'list',el:card||head.closest('.list'),sx:e.clientX,sy:e.clientY,on:false}});
+addEventListener('pointermove',e=>{if(!DR)return;if(!DR.on){if(Math.hypot(e.clientX-DR.sx,e.clientY-DR.sy)<6)return;dragStart(e)}dragMove(e)});
+addEventListener('pointerup',()=>{if(!DR)return;const d=DR;DR=null;if(d.on){dragEnd(d,false);setTimeout(()=>S.noclick=false,0)}});
+addEventListener('pointercancel',()=>{if(DR&&DR.on){dragEnd(DR,true);S.noclick=false}DR=null});
+function dragStart(e){const d=DR,r=d.el.getBoundingClientRect();d.on=true;S.noclick=true;d.ox=e.clientX-r.left;d.oy=e.clientY-r.top;
+ d.ghost=d.el.cloneNode(true);Object.assign(d.ghost.style,{position:'fixed',width:r.width+'px',zIndex:9999,pointerEvents:'none',opacity:.92,boxShadow:'0 10px 28px #0007',transform:'rotate(2deg)',left:r.left+'px',top:r.top+'px'});
+ d.ph=document.createElement('div');d.ph.className='ph';d.ph.style.height=r.height+'px';if(d.kind==='list')d.ph.style.width=r.width+'px';
+ document.body.appendChild(d.ghost);d.el.after(d.ph);d.el.style.display='none';document.body.style.userSelect='none'}
+function dragMove(e){const d=DR;d.ghost.style.left=e.clientX-d.ox+'px';d.ghost.style.top=e.clientY-d.oy+'px';
+ const v=$('view'),vr=v.getBoundingClientRect();if(e.clientX>vr.right-50)v.scrollLeft+=18;else if(e.clientX<vr.left+50)v.scrollLeft-=18;
+ if(d.kind==='card'){const L=document.elementsFromPoint(e.clientX,e.clientY).find(x=>x.classList&&x.classList.contains('list')&&x.dataset.l);if(!L)return;
+  const box=L.querySelector('.cards');let before=null;for(const c of [...box.querySelectorAll('.card')].filter(c=>c!==d.el)){const r=c.getBoundingClientRect();if(e.clientY<r.top+r.height/2){before=c;break}}
+  if(before)box.insertBefore(d.ph,before);else box.appendChild(d.ph)}
+ else{const bd=$('bd2');let before=null;for(const l of [...bd.querySelectorAll('.list[data-l]')].filter(l=>l!==d.el)){const r=l.getBoundingClientRect();if(e.clientX<r.left+r.width/2){before=l;break}}
+  if(before)bd.insertBefore(d.ph,before);else bd.insertBefore(d.ph,bd.lastElementChild)}}
+async function dragEnd(d,cancel){d.ghost.remove();document.body.style.userSelect='';const ph=d.ph;
+ const nb=dir=>{let n=ph[dir];while(n&&(n===d.el||!(d.kind==='card'?n.classList.contains('card'):n.dataset.l)))n=n[dir];return n};
+ const prev=nb('previousElementSibling'),next=nb('nextElementSibling'),list=d.kind==='card'&&ph.closest('.list')?+ph.closest('.list').dataset.l:0;
+ ph.remove();d.el.style.display='';if(cancel)return;
+ const p=n=>+n.dataset.p;let pos;
+ if(d.kind==='card'&&(S.sort!=='manual'||S.f.q||S.f.label||S.f.pri))pos=Math.max(0,...S.data.cards.filter(c=>c.list_id==list).map(c=>c.pos))+1;
+ else pos=!prev&&!next?1:!prev?p(next)-1:!next?p(prev)+1:(p(prev)+p(next))/2;
+ if(d.kind==='card'){if(list)await run(inv('move_card',{id:+d.el.dataset.c,list,pos}))}else await run(inv('set_list_pos',{id:+d.el.dataset.l,pos}));
+ re()}
+// ---- right-click context menus
+let CM=[];
+function menuHtml(items){return items.map(it=>{if(it==='-')return '<div class=cm-sep></div>';
+ if(it.sub)return `<div class=cm-i>${it.t}<span>▸</span><div class=cm-sub>${menuHtml(it.sub.length?it.sub:[{t:'(none)',f:()=>{}}])}</div></div>`;
+ CM.push(it.f);return `<div class="cm-i ${it.d?'cm-d':''}" onclick="cmRun(${CM.length-1})">${it.t}</div>`}).join('')}
+function showMenu(pt,items){CM=[];const m=$('ctx');m.innerHTML=menuHtml(items);m.style.display='block';const w=m.offsetWidth,h=m.offsetHeight;let x=pt.clientX,y=pt.clientY;
+ if(x+w>innerWidth)x=innerWidth-w-4;if(y+h>innerHeight)y=Math.max(4,innerHeight-h-4);m.style.left=x+'px';m.style.top=y+'px';m.classList.toggle('flip',x>innerWidth-w-320)}
+const hideMenu=()=>{$('ctx').style.display='none'};
+async function cmRun(i){const f=CM[i];hideMenu();await f()}
+addEventListener('pointerdown',e=>{if(!e.target.closest('#ctx'))hideMenu()},true);
+addEventListener('keydown',e=>{if(e.key==='Escape')hideMenu()});addEventListener('resize',hideMenu);addEventListener('blur',hideMenu);$('view').addEventListener('scroll',hideMenu);
+function cardMenu(id){const c=S.view==='board'?(S.data.cards||[]).find(x=>x.id==id):null;const R=async(cmd,a)=>{await run(inv(cmd,a));refresh()};
+ const dd=n=>{const d=new Date();d.setDate(d.getDate()+n);return d.toLocaleDateString('sv')};
+ const it=[{t:'📂 Open',f:()=>editCard(id)},{t:c?(c.done?'↩ Reopen':'✓ Mark done'):'✓ Toggle done',f:()=>R('toggle_done',{id})},'-',
+ {t:'⚑ Priority',sub:['None','Low','Medium','High'].map((n,i)=>({t:(c&&c.priority===i?'● ':'')+n,f:()=>R('set_priority',{id,priority:i})}))},
+ {t:'📅 Due date',sub:[['Today',0],['Tomorrow',1],['In a week',7]].map(([n,k])=>({t:n,f:()=>R('set_due',{id,due:dd(k)})})).concat([{t:'Pick a date…',f:async()=>{const o=await formDlg('Due date',[['due','Date','date',(c&&c.due)||dd(0)]]);if(o&&o!=='del')await R('set_due',{id,due:o.due||null})}},{t:'Clear',f:()=>R('set_due',{id,due:null})}])}];
+ if(c){const on=new Set((c.labels||'').split(';').filter(Boolean).map(x=>+x.split('|')[2])),sib=S.data.cards.filter(x=>x.list_id==c.list_id),mx=l=>Math.max(0,...S.data.cards.filter(x=>x.list_id==l).map(x=>x.pos));
+  it.push({t:'🏷 Labels',sub:S.data.labels.map(l=>({t:(on.has(l.id)?'✔ ':'')+l.name,f:()=>R('toggle_label',{card:id,label:l.id})}))},
+   {t:'➡ Move to list',sub:S.data.lists.filter(l=>l.id!=c.list_id).map(l=>({t:l.name,f:()=>R('move_card',{id,list:l.id,pos:mx(l.id)+1})}))},
+   {t:'⤒ Move to top',f:()=>R('move_card',{id,list:c.list_id,pos:Math.min(...sib.map(x=>x.pos))-1})},{t:'⤓ Move to bottom',f:()=>R('move_card',{id,list:c.list_id,pos:mx(c.list_id)+1})},
+   {t:c.timer?'⏹ Stop timer':'▶ Start timer',f:()=>R('timer_toggle',{id})},'-',{t:'⧉ Duplicate',f:()=>R('dup_card',{id})},
+   {t:'⎘ Save as template',f:async()=>{const n=await ask('Template name',c.title);if(n){await run(inv('save_template',{card:id,name:n}));toast('Template saved')}}},
+   {t:'📋 Copy title',f:()=>{navigator.clipboard.writeText(c.title);toast('Copied')}})}
+ it.push('-',{t:'🗄 Archive',f:()=>R('archive_card',{id})},{t:'🗑 Delete',d:1,f:async()=>{if(confirm('Delete card?'))await R('del_card',{id})}});return it}
+function listItems(id){const l=S.data.lists.find(x=>x.id==id),R=async(cmd,a)=>{await run(inv(cmd,a));re()};
+ return [{t:'➕ Add card',f:()=>{const i=document.querySelector(`.list[data-l="${id}"] .addc`);if(i)i.focus()}},{t:'✎ Rename',f:()=>renList(id,l.name)},{t:'🎨 Colour',f:()=>listColor(id,l.color||'#6c8cff')},'-',
+ {t:'◀ Move left',f:()=>R('move_list',{id,dir:-1})},{t:'▶ Move right',f:()=>R('move_list',{id,dir:1})},'-',{t:'⎘ Add from template',f:()=>tplDlg(id)},
+ {t:'🗄 Archive done cards',f:()=>R('archive_cards',{list:id,doneOnly:true})},{t:'🗄 Archive all cards',f:async()=>{if(confirm('Archive all cards in this list?'))await R('archive_cards',{list:id,doneOnly:false})}},'-',{t:'🗑 Delete list',d:1,f:()=>delList(id)}]}
+const boardItems=()=>[{t:'➕ Add list',f:addList},{t:'🏷 Labels',f:labelsDlg},{t:'🏁 Milestones',f:msDlg},{t:'🗓 Timeline',f:timeline},{t:'🔖 Saved filters',f:filtersDlg},'-',
+ {t:S.data.board.fav?'☆ Remove favourite':'⭐ Favourite',f:favBoard},{t:'⬇ Export Markdown',f:exportMd},{t:'✎ Edit board',f:()=>editBoard(S.board)}];
+function wsMenu(id){const w=S.wss.find(x=>x.id==id);return [{t:'📂 Open',f:()=>{S.ws=id;side().then(home)}},{t:'➕ New board here',f:async()=>{S.ws=id;await side();newBoard()}},{t:'✎ Edit workspace',f:()=>editWs(w.id,w.name,w.color,w.icon)},'-',
+ {t:'🗑 Delete workspace',d:1,f:async()=>{if(confirm('Delete workspace with all boards and cards?')){await run(inv('del_workspace',{id}));S.ws=null;await side();home()}}}]}
+function bdMenu(id){const b=S.boards.find(x=>x.id==id);return [{t:'📂 Open',f:()=>openBoard(id)},{t:b.fav?'☆ Remove favourite':'⭐ Favourite',f:async()=>{await run(inv('toggle_fav',{id}));await side();if(S.view==='board'&&S.board==id)re()}},
+ {t:'⧉ Duplicate structure',f:()=>dupBoard(id)},{t:'✎ Edit board',f:()=>editBoard(id)},'-',{t:'🗑 Delete board',d:1,f:async()=>{if(confirm('Delete board and all its cards?')){await run(inv('del_board',{id}));await side();home()}}}]}
+async function inboxMenu(pt,id,text){const ls=await run(inv('ws_lists',{ws:S.ws}))||[];
+ showMenu(pt,[{t:'📌 Convert to card',sub:ls.map(l=>({t:`${l.board} › ${l.list}`,f:async()=>{await run(inv('add_card',{list:l.id,title:text}));await run(inv('del_inbox',{id}));home()}}))},{t:'🗑 Delete',d:1,f:()=>delInbox(id)}])}
+addEventListener('contextmenu',e=>{const t=e.target;if(t.closest('input,textarea,select'))return;e.preventDefault();if($('dlg').open)return;
+ const pt={clientX:e.clientX,clientY:e.clientY},c=t.closest('[data-c]'),inb=t.closest('[data-inbox]'),ws=t.closest('[data-ws]'),bd=t.closest('[data-bd]'),ls=t.closest('.list[data-l]');let it=null;
+ if(c)it=cardMenu(+c.dataset.c);else if(inb){inboxMenu(pt,+inb.dataset.inbox,inb.dataset.t);return}
+ else if(ws)it=wsMenu(+ws.dataset.ws);else if(bd)it=bdMenu(+bd.dataset.bd);
+ else if(S.view==='board'&&ls)it=listItems(+ls.dataset.l);else if(S.view==='board'&&t.closest('#view'))it=boardItems();
+ if(it)showMenu(pt,it);else hideMenu()});
+function settingsView(){setView('settings');
+$('view').innerHTML=`<div class=tb><b style="font-size:18px">⚙ Settings</b></div><div class=grid>
+<div class=box><h4 style="margin-top:0">Appearance</h4><div class=row><button onclick="toggleTheme()">Toggle dark / light</button><label>Accent <input type=color value="${esc(S.set.accent||'#6c8cff')}" oninput="setAccent(this.value)" style="padding:0;height:30px;width:50px"></label></div></div>
+<div class=box><h4 style="margin-top:0">Data</h4><div style="display:flex;flex-direction:column;gap:6px;max-width:320px">
+<button onclick="doExport()">Export JSON</button><button onclick="$('imp').click()">Import JSON</button><button onclick="backupsDlg()">Backups / Restore</button><button onclick="syncDlg()">☁ Sync</button><button onclick="notifDlg()">🔔 Notifications</button>
+<button onclick="run(inv('seed')).then(()=>{S.ws=null;boot()})">Add my starter workspaces</button><button onclick="run(inv('open_data_folder'))">Open data folder</button></div></div></div>`}
+boot().then(autoSync);
+</script></body></html>
