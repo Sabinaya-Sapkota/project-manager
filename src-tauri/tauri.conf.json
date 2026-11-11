@@ -1,0 +1,44 @@
+{
+  "productName": "Project Manager",
+  "version": "0.1.0",
+  "identifier": "dev.crazyboyjack.commandcentre",
+  "build": {
+    "frontendDist": "../ui"
+  },
+  "app": {
+    "withGlobalTauri": true,
+    "windows": [
+      {
+        "title": "Project Manager",
+        "width": 1320,
+        "height": 820,
+        "minWidth": 900,
+        "minHeight": 600,
+        "dragDropEnabled": false
+      }
+    ],
+    "security": {
+      "csp": null
+    }
+  },
+  "bundle": {
+    "active": true,
+    "targets": [
+      "nsis"
+    ],
+    "icon": [
+      "icons/icon.png",
+      "icons/icon.ico"
+    ],
+    "windows": {
+      "nsis": {
+        "installMode": "currentUser"
+      }
+    },
+    "publisher": "Project Manager",
+    "copyright": "Copyright (c) 2026 Project Manager contributors",
+    "category": "Productivity",
+    "shortDescription": "Local-first project and task manager",
+    "longDescription": "A local-first, Trello-style project manager with boards, calendar, timeline, milestones, sync and backups."
+  }
+}

@@ -1,0 +1,20 @@
+# Rust / Tauri
+/src-tauri/target/
+/src-tauri/gen/
+**/*.rs.bk
+
+# Build output
+/installer/
+/site/
+node_modules/
+
+# Local data
+*.db
+*.db-journal
+*.sqlite
+
+# OS / editor
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
